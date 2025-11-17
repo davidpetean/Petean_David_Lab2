@@ -1,4 +1,4 @@
-﻿@page
+﻿@page "/"
 @model Petean_David_Lab2.Pages.Books.IndexModel
 
 @{
@@ -13,35 +13,48 @@
 
 <table class="table">
     <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Book[0].Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Book[0].Author)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Book[0].Price)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Book[0].PublishingDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Book[0].Publisher.PublisherName)
-            </th>
-            <th></th>
-        </tr>
+        @if (Model.BookD.Books != null && Model.BookD.Books.Any())
+        {
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.BookD.Books.First().Title)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.BookD.Books.First().Author)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.BookD.Books.First().Price)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.BookD.Books.First().PublishingDate)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.BookD.Books.First().Publisher.PublisherName)
+                </th>
+                <th>
+                    @Html.DisplayName("Categories")
+                </th>
+                <th></th>
+            </tr>
+        }
     </thead>
 
     <tbody>
-        @foreach (var item in Model.Book)
+        @foreach (var item in Model.BookD.Books)
         {
-            <tr>
+            string selectedRow = "";
+            if (item.ID == Model.BookID)
+            {
+                selectedRow = "table-success";
+            }
+            
+            <tr class="@selectedRow">
                 <td>
-                    @Html.DisplayFor(modelItem => item.Title)
+                    <a asp-page="./Index" asp-route-id="@item.ID">
+                        @Html.DisplayFor(modelItem => item.Title)
+                    </a>
                 </td>
                 <td>
-                    @* CORECȚIE: Afișează Numele și Prenumele Autorului *@
                     @(item.Author?.FirstName) @(item.Author?.LastName)
                 </td>
                 <td>
@@ -53,6 +66,21 @@
                 <td>
                     @Html.DisplayFor(modelItem => item.Publisher.PublisherName)
                 </td>
+                
+                <td>
+                    @{
+                        if (item.BookCategories != null)
+                        {
+                            foreach (var category in item.BookCategories)
+                            {
+                                <a asp-page="./Index" asp-route-id="@item.ID" asp-route-categoryID="@category.CategoryID">
+                                    @category.Category.CategoryName
+                                </a> @: &nbsp;
+                            }
+                        }
+                    }
+                </td>
+                
                 <td>
                     <a asp-page="./Edit" asp-route-id="@item.ID">Edit</a> |
                     <a asp-page="./Details" asp-route-id="@item.ID">Details</a> |
@@ -63,3 +91,13 @@
     </tbody>
 </table>
 
+@if (Model.BookD.Categories != null && Model.BookD.Categories.Any())
+{
+    <h3>Categories for Selected Book</h3>
+    <ul>
+        @foreach (var category in Model.BookD.Categories)
+        {
+            <li>@category.CategoryName</li>
+        }
+    </ul>
+}
