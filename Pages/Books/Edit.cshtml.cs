@@ -1,94 +1,110 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Petean_David_Lab2.Data;
 using Petean_David_Lab2.Models;
+using Petean_David_Lab2.Data;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Petean_David_Lab2.Pages.Books
 {
-    public class EditModel : PageModel
+    public class EditModel : BookCategoriesPageModel
     {
-        private readonly Petean_David_Lab2.Data.Petean_David_Lab2Context _context;
+        private readonly Petean_David_Lab2Context _context;
 
-        public EditModel(Petean_David_Lab2.Data.Petean_David_Lab2Context context)
+        public EditModel(Petean_David_Lab2Context context)
         {
             _context = context;
         }
 
         [BindProperty]
-        public Book Book { get; set; } = default!;
+        public Book Book { get; set; }
+
+        public List<AssignedCategoryData> AssignedCategoryDataList { get; set; } = new List<AssignedCategoryData>();
+
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {
-            if (id == null || _context.Book == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            var book = await _context.Book
-                .Include(b => b.Author)
-                .FirstOrDefaultAsync(m => m.ID == id);
+            Book = await _context.Book
+            .Include(b => b.Author)
+            .Include(b => b.Publisher)
+            .Include(b => b.BookCategories).ThenInclude(b => b.Category)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.ID == id);
 
-            if (book == null)
+            if (Book == null)
             {
                 return NotFound();
             }
-            Book = book;
 
-            ViewData["AuthorID"] = new SelectList(_context.Author.Select(a => new
+            AssignedCategoryDataList = PopulateAssignedCategoryData(_context, Book);
+
+            var authorList = _context.Author.Select(x => new
             {
-                ID = a.ID,
-                FullName = a.FirstName + " " + a.LastName
-            }), "ID", "FullName");
+                x.ID,
+                FullName = x.LastName + " " + x.FirstName
+            });
 
-            ViewData["PublisherID"] = new SelectList(_context.Publisher, "ID", "PublisherName");
+            ViewData["AuthorID"] = new SelectList(authorList, "ID", "FullName", Book.AuthorID);
+            ViewData["PublisherID"] = new SelectList(_context.Publisher, "ID", "PublisherName", Book.PublisherID);
 
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(int? id, string[] selectedCategories)
         {
-            if (!ModelState.IsValid)
+            if (id == null)
             {
-                ViewData["AuthorID"] = new SelectList(_context.Author.Select(a => new
-                {
-                    ID = a.ID,
-                    FullName = a.FirstName + " " + a.LastName
-                }), "ID", "FullName");
-
-                ViewData["PublisherID"] = new SelectList(_context.Publisher, "ID", "PublisherName");
-                return Page();
+                return NotFound();
             }
 
-            _context.Attach(Book).State = EntityState.Modified;
+            var bookToUpdate = await _context.Book
+            .Include(i => i.BookCategories)
+            .FirstOrDefaultAsync(s => s.ID == id);
 
-            try
+            if (bookToUpdate == null)
             {
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-            catch (DbUpdateConcurrencyException)
+
+            if (await TryUpdateModelAsync<Book>(
+            bookToUpdate,
+            "Book",
+            i => i.Title,
+            i => i.AuthorID,
+            i => i.Price,
+            i => i.PublishingDate,
+            i => i.PublisherID))
             {
-                if (!BookExists(Book.ID))
+                UpdateBookCategories(_context, selectedCategories, bookToUpdate);
+
+                try
                 {
-                    return NotFound();
+                    await _context.SaveChangesAsync();
+                    return RedirectToPage("./Index");
                 }
-                else
+                catch (DbUpdateConcurrencyException)
                 {
-                    throw;
                 }
             }
 
-            return RedirectToPage("./Index");
-        }
+            AssignedCategoryDataList = PopulateAssignedCategoryData(_context, bookToUpdate);
 
-        private bool BookExists(int id)
-        {
-            return _context.Book.Any(e => e.ID == id);
+            var authorList = _context.Author.Select(x => new
+            {
+                x.ID,
+                FullName = x.LastName + " " + x.FirstName
+            });
+            ViewData["AuthorID"] = new SelectList(authorList, "ID", "FullName", bookToUpdate.AuthorID);
+            ViewData["PublisherID"] = new SelectList(_context.Publisher, "ID", "PublisherName", bookToUpdate.PublisherID);
+
+            return Page();
         }
     }
 }

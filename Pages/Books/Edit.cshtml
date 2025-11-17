@@ -12,9 +12,11 @@
 <div class="row">
     <div class="col-md-4">
         <form method="post">
+            
+            <input type="hidden" asp-for="Book.ID" /> 
+            
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Book.ID" />
-
+            
             <div class="form-group">
                 <label asp-for="Book.Title" class="control-label"></label>
                 <input asp-for="Book.Title" class="form-control" />
@@ -44,11 +46,38 @@
                 <select asp-for="Book.PublisherID" class="form-control" asp-items="ViewBag.PublisherID"></select>
                 <span asp-validation-for="Book.PublisherID" class="text-danger"></span>
             </div>
+            
+            <div class="form-group">
+                <label class="control-label">Categories</label>
+                <div class="table">
+                    <table>
+                        <tr>
+                            @{
+                                int cnt = 0;
+                                // Folosește AssignedCategoryDataList din EditModel.cs
+                                foreach (var cat in Model.AssignedCategoryDataList)
+                                {
+                                    if (cnt++ % 3 == 0)
+                                    {
+                                        @:</tr><tr>
+                                    }
+                                    @:<td>
+                                        <input type="checkbox"
+                                            name="selectedCategories"
+                                            value="@cat.CategoryID"
+                                            @(Html.Raw(cat.Assigned ? "checked=\"checked\"" : "")) />
+                                        @cat.Name
+                                    @:</td>
+                                }
+                                @:</tr>
+                            }
+                        </table>
+                    </div>
+            </div>
 
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>
-
         </form>
     </div>
 </div>
@@ -58,9 +87,5 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
-
-
