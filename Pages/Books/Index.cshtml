@@ -5,11 +5,22 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>Index</h1>
+<h1>Books Index</h1>
 
 <p>
     <a asp-page="Create">Create New</a>
 </p>
+
+<form asp-page="./Index" method="get">
+    <div class="form-actions no-color">
+        <p>
+            Find by title, author, or publisher: 
+            <input type="text" name="SearchString" value="@Model.CurrentFilter" />
+            <input type="submit" value="Search" class="btn btn-primary" /> |
+            <a asp-page="./Index">Back to Full List</a>
+        </p>
+    </div>
+</form>
 
 <table class="table">
     <thead>
@@ -17,10 +28,14 @@
         {
             <tr>
                 <th>
-                    @Html.DisplayNameFor(model => model.BookD.Books.First().Title)
+                    <a asp-page="./Index" asp-route-sortOrder="@Model.TitleSort" asp-route-searchString="@Model.CurrentFilter">
+                        @Html.DisplayNameFor(model => model.BookD.Books.First().Title)
+                    </a>
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.BookD.Books.First().Author)
+                    <a asp-page="./Index" asp-route-sortOrder="@Model.AuthorSort" asp-route-searchString="@Model.CurrentFilter">
+                        @Html.DisplayNameFor(model => model.BookD.Books.First().Author)
+                    </a>
                 </th>
                 <th>
                     @Html.DisplayNameFor(model => model.BookD.Books.First().Price)
@@ -50,12 +65,12 @@
             
             <tr class="@selectedRow">
                 <td>
-                    <a asp-page="./Index" asp-route-id="@item.ID">
+                    <a asp-page="./Index" asp-route-id="@item.ID" asp-route-sortOrder="@Model.CurrentSort" asp-route-searchString="@Model.CurrentFilter">
                         @Html.DisplayFor(modelItem => item.Title)
                     </a>
                 </td>
                 <td>
-                    @(item.Author?.FirstName) @(item.Author?.LastName)
+                    @(item.Author?.FullName ?? $"{item.Author?.FirstName} {item.Author?.LastName}")
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.Price)
@@ -73,7 +88,7 @@
                         {
                             foreach (var category in item.BookCategories)
                             {
-                                <a asp-page="./Index" asp-route-id="@item.ID" asp-route-categoryID="@category.CategoryID">
+                                <a asp-page="./Index" asp-route-id="@item.ID" asp-route-categoryID="@category.CategoryID" asp-route-sortOrder="@Model.CurrentSort" asp-route-searchString="@Model.CurrentFilter">
                                     @category.Category.CategoryName
                                 </a> @: &nbsp;
                             }

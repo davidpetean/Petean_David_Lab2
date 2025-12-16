@@ -15,6 +15,15 @@ namespace Petean_David_Lab2.Models
         [StringLength(50)]
         public string LastName { get; set; } = string.Empty;
 
+        [Display(Name = "Full Name")]
+        public string FullName
+        {
+            get
+            {
+                return FirstName + " " + LastName;
+            }
+        }
+
         public ICollection<Book>? Books { get; set; }
     }
 }

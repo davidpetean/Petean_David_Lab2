@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Petean_David_Lab2.Data;
+using Petean_David_Lab2.Models;
+using Petean_David_Lab2.Models.ViewModels; // Spațiul de nume corect pentru structura Models/ViewModels
 
 namespace Petean_David_Lab2.Pages.Categories
 {
@@ -18,11 +19,32 @@ namespace Petean_David_Lab2.Pages.Categories
             _context = context;
         }
 
-        public IList<Category> Category { get;set; } = default!;
+        public CategoryData CategoryD { get; set; } = new CategoryData();
 
-        public async Task OnGetAsync()
+        public int CategoryID { get; set; }
+
+        public async Task OnGetAsync(int? id)
         {
-            Category = await _context.Category.ToListAsync();
+            CategoryD.Categories = await _context.Category
+                .Include(c => c.BookCategories)
+                    .ThenInclude(bc => bc.Book)
+                        .ThenInclude(b => b.Author)
+                .OrderBy(c => c.CategoryName)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (id != null)
+            {
+                CategoryID = id.Value;
+
+                Category category = CategoryD.Categories
+                    .FirstOrDefault(i => i.ID == id.Value);
+
+                if (category != null)
+                {
+                    CategoryD.Books = category.BookCategories.Select(bc => bc.Book);
+                }
+            }
         }
     }
 }
