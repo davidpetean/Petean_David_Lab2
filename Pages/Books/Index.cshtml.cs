@@ -37,10 +37,7 @@ namespace Petean_David_Lab2.Pages.Books
             TitleSort = String.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
             AuthorSort = sortOrder == "Author" ? "author_desc" : "Author";
 
-            if (searchString != null)
-            {
-                CurrentFilter = searchString;
-            }
+            CurrentFilter = searchString;
 
             var booksIQ = _context.Book
                 .Include(b => b.Author)
@@ -52,8 +49,15 @@ namespace Petean_David_Lab2.Pages.Books
             if (!String.IsNullOrEmpty(searchString))
             {
                 booksIQ = booksIQ.Where(s => s.Title.Contains(searchString)
-                                       || s.Author.FullName.Contains(searchString)
-                                       || s.Publisher.PublisherName.Contains(searchString));
+                                             || s.Author.FullName.Contains(searchString)
+                                             || s.Publisher.PublisherName.Contains(searchString));
+            }
+
+            if (categoryID != null)
+            {
+                CategoryID = categoryID.Value;
+
+                booksIQ = booksIQ.Where(b => b.BookCategories.Any(bc => bc.CategoryID == categoryID.Value));
             }
 
             switch (sortOrder)
@@ -84,16 +88,6 @@ namespace Petean_David_Lab2.Pages.Books
                 if (book != null)
                 {
                     BookD.Categories = book.BookCategories.Select(s => s.Category);
-
-                    if (categoryID != null)
-                    {
-                        CategoryID = categoryID.Value;
-
-                        BookD.Books = book.BookCategories
-                            .Where(c => c.CategoryID == categoryID.Value)
-                            .Select(c => c.Book)
-                            .ToList();
-                    }
                 }
             }
         }
